@@ -96,7 +96,8 @@ function App() {
           <p>Duration: {duration}</p>
         </div>
       )}
-      <Map apiKey="process.env.REACT_APP_API_KEY" /> 
+      <Map apiKey={process.env.REACT_APP_API_KEY} />
+ 
       <button onClick={calculateDistanceAndDuration}>Calculate Distance</button>
 
       <Footer />
