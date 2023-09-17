@@ -87,4 +87,3 @@ const Map = ({ apiKey, origin, destination, mapLocation }) => {
 };
 
 export default Map;
-
