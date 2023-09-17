@@ -20,6 +20,11 @@ code {
   flex-direction: column;
 }
 
+.cont {
+  display: flex;
+  flex-direction: row;
+}
+
 button {
   padding: 10px 20px;
   border: none;

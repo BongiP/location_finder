@@ -1,13 +1,23 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
-const Map = ({ apiKey, address }) => {
+// Default location coordinates for London
+const DEFAULT_LAT = 51.5074; // Latitude for London
+const DEFAULT_LNG = -0.1278; // Longitude for London
+
+const Map = ({ apiKey, origin, destination, mapLocation }) => {
   const mapRef = useRef(null);
-  const map = useRef(null); 
+  const map = useRef(null);
+  const directionsService = useRef(null);
+  const directionsDisplay = useRef(null);
+
+  // Use the user's GPS location if available, otherwise, use the default location in London
+  const [initialLocation, setInitialLocation] = useState(
+    mapLocation || { lat: DEFAULT_LAT, lng: DEFAULT_LNG }
+  );
 
   useEffect(() => {
-  
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
     script.async = true;
     script.defer = true;
 
@@ -18,36 +28,63 @@ const Map = ({ apiKey, address }) => {
     document.body.appendChild(script);
 
     script.onload = () => {
+      directionsService.current = new window.google.maps.DirectionsService();
+      directionsDisplay.current = new window.google.maps.DirectionsRenderer();
+
+      // Check if mapLocation is available (user's GPS location)
+      if (mapLocation) {
+        setInitialLocation(mapLocation);
+      }
+
       map.current = new window.google.maps.Map(mapRef.current, {
-        center: { lat: 0, lng: 0 },
+        center: initialLocation,
         zoom: 12,
       });
+
+      directionsDisplay.current.setMap(map.current);
+
+      // Add markers for origin and destination
+      if (origin) {
+        new window.google.maps.Marker({
+          position: origin,
+          map: map.current,
+          title: 'Origin',
+        });
+      }
+
+      if (destination) {
+        new window.google.maps.Marker({
+          position: destination,
+          map: map.current,
+          title: 'Destination',
+        });
+      }
+
+      // Calculate and display directions
+      if (origin && destination) {
+        const request = {
+          origin: origin,
+          destination: destination,
+          travelMode: 'DRIVING',
+        };
+
+        directionsService.current.route(request, (result, status) => {
+          if (status === 'OK') {
+            directionsDisplay.current.setDirections(result);
+          } else {
+            console.error('Directions request failed:', status);
+          }
+        });
+      }
     };
 
     return () => {
       document.body.removeChild(script);
     };
-  }, [apiKey]);
+  }, [apiKey, initialLocation, origin, destination, mapLocation]);
 
-  useEffect(() => {
-    if (map.current && address) {
-      const geocoder = new window.google.maps.Geocoder();
-
-      geocoder.geocode({ address: address }, (results, status) => {
-        if (status === 'OK' && results[0] && results[0].geometry) {
-          map.current.setCenter(results[0].geometry.location);
-        } else {
-          console.error('Geocode request failed:', status);
-        }
-      });
-    }
-  }, [address]);
-
-  return <div ref={mapRef} style={{ width: '100%', height: '400px' }}></div>;
+  return <div ref={mapRef} style={{ width: '100vw', height: '100vh' }}></div>;
 };
 
 export default Map;
-
-
-
 
